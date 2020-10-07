@@ -104,7 +104,10 @@ namespace IndividualTask1_ComputerGraphics_
             }
             var x = p2.X - p1.X;
             var y = p1.Y - p2.Y;
-            return y / x; //Math.Atan(y / x);
+            var val = y / x;
+            if (val < 0)
+                return (float)(Math.Atan(y / x)+360*Math.PI/180);
+            else return (float)Math.Atan(y / x);
         }
 
         private void Jarvis()
@@ -127,27 +130,18 @@ namespace IndividualTask1_ComputerGraphics_
             }
             convexHull.Add(first);
             //points.Remove(first);
-            // Находим вторую точку. Она имеет наименьший положительный полярный угол относительно первой точки как начала координат.
+            // Находим вторую точку. Она имеет наименьший полярный угол относительно первой точки как начала координат.
             PointF second = first;
-            PointF second2 = first;
             var minAngle = float.MaxValue;
-            var maxAngle = float.MinValue;
             foreach (var point in points)
             {
-                var localAngle = polarAngleTangent(first, point);
-                if (localAngle <= minAngle && localAngle >= 0)
+                var localMinAngle = polarAngleTangent(first, point);
+                if (localMinAngle <= minAngle)
                 {
                     second = point;
-                    minAngle = localAngle;
-                }
-                if (localAngle>maxAngle&&localAngle<0)
-                {
-                    second2 = point;
-                    maxAngle = localAngle;
+                    minAngle = localMinAngle;
                 }
             }
-            if (second == first)
-                second = second2;
             convexHull.Add(second);
             points.Remove(second);
             PointF prev = first;
