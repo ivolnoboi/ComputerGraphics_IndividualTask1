@@ -78,9 +78,30 @@ namespace IndividualTask1_ComputerGraphics_
             else return p1.Y > p2.Y; // первая точка ниже второй?
         }
 
-        private float scalar_product(PointF p1, PointF p2)
+        private float scalar_product(PointF p1, PointF p2, PointF p3)
         {
-            return (p1.X*p2.X+p1.Y*p2.Y);
+            // координаты первого вектора
+            var x1 = p1.X - p2.X;
+            var y1 = p1.Y - p2.Y;
+            // координаты второго вектора
+            var x2 = p3.X - p2.X;
+            var y2 = p3.Y - p2.Y;
+            var scalarProd = x1 * x2 + y1 * y2; // скалярное произведение векторов
+            var len1 = Math.Sqrt(x1 * x1 + y1 * y1);
+            var len2 = Math.Sqrt(x2 * x2 + y2 * y2);
+            return (float)(scalarProd / (len1 * len2)); // косинус угла между векторами
+        }
+
+        // тангенс полярного угла точки p2 относительно точки p1 как начала координат
+        private float polarAngleTangent(PointF p1, PointF p2)
+        {
+            if (Math.Abs(p1.X - p2.X) < 0.001) // если угол равен 90 градусам
+            {
+                return float.MaxValue;
+            }
+            var x = p2.X - p1.X;
+            var y = p1.Y - p2.Y;
+            return y / x; //Math.Atan(y / x);
         }
 
         private void Jarvis()
@@ -103,24 +124,40 @@ namespace IndividualTask1_ComputerGraphics_
             }
             convexHull.Add(first);
             //points.Remove(first);
-            PointF current = first;
+            // Находим вторую точку. Она имеет наименьший положительный полярный угол относительно первой точки как начала координат.
+            PointF second = first;
+            var minAngle = float.MaxValue;
+            foreach (var point in points)
+            {
+                var localMinAngle = polarAngleTangent(first, point);
+                if (localMinAngle <= minAngle && localMinAngle >= 0)
+                {
+                    second = point;
+                    minAngle = localMinAngle;
+                }
+            }
+            convexHull.Add(second);
+            points.Remove(second);
+            PointF prev = first;
+            PointF current = second;
             do
             {
                 PointF next = current;
                 var min = float.MaxValue;
                 foreach (var point in points) // Находим следующую точку
                 {
-                    var localMin = scalar_product(current, point);
+                    var localMin = scalar_product(prev, current, point);
                     if (localMin < min) // если точка составляет максимальный угол с текущей (минимальное скалярное произведение)
                     {
                         min = localMin;
                         next = point;
                     }
                 }
+                prev = current;
                 current = next;
-                convexHull.Add(current);
-                points.Remove(current);
-            } 
+                convexHull.Add(next);
+                points.Remove(next);
+            }
             while (current != first);
         }
     }
