@@ -78,7 +78,10 @@ namespace IndividualTask1_ComputerGraphics_
             else return p1.Y > p2.Y; // первая точка ниже второй?
         }
 
-        private float scalar_product(PointF p1, PointF p2, PointF p3)
+        /// <summary>
+        /// Значение косинуса между векторами
+        /// </summary>
+        private float cosValueBetweenVectors(PointF p1, PointF p2, PointF p3)
         {
             // координаты первого вектора
             var x1 = p1.X - p2.X;
@@ -126,16 +129,25 @@ namespace IndividualTask1_ComputerGraphics_
             //points.Remove(first);
             // Находим вторую точку. Она имеет наименьший положительный полярный угол относительно первой точки как начала координат.
             PointF second = first;
+            PointF second2 = first;
             var minAngle = float.MaxValue;
+            var maxAngle = float.MinValue;
             foreach (var point in points)
             {
-                var localMinAngle = polarAngleTangent(first, point);
-                if (localMinAngle <= minAngle && localMinAngle >= 0)
+                var localAngle = polarAngleTangent(first, point);
+                if (localAngle <= minAngle && localAngle >= 0)
                 {
                     second = point;
-                    minAngle = localMinAngle;
+                    minAngle = localAngle;
+                }
+                if (localAngle>maxAngle&&localAngle<0)
+                {
+                    second2 = point;
+                    maxAngle = localAngle;
                 }
             }
+            if (second == first)
+                second = second2;
             convexHull.Add(second);
             points.Remove(second);
             PointF prev = first;
@@ -146,7 +158,7 @@ namespace IndividualTask1_ComputerGraphics_
                 var min = float.MaxValue;
                 foreach (var point in points) // Находим следующую точку
                 {
-                    var localMin = scalar_product(prev, current, point);
+                    var localMin = cosValueBetweenVectors(prev, current, point);
                     if (localMin < min) // если точка составляет максимальный угол с текущей (минимальное скалярное произведение)
                     {
                         min = localMin;
