@@ -12,26 +12,25 @@ namespace IndividualTask1_ComputerGraphics_
 {
     public partial class Form1 : Form
     {
-        /*LinkedList<PointF> points;
-        LinkedList<PointF> convexHull;*/
-        List<PointF> points;
-        List<PointF> convexHull;
+        LinkedList<PointF> points;
+        LinkedList<PointF> convexHull;
         Bitmap bmp;
         public Form1()
         {
             InitializeComponent();
-            /*points = new LinkedList<PointF>();
-            convexHull = new LinkedList<PointF>();*/
-            points = new List<PointF>();
-            convexHull = new List<PointF>();
+            points = new LinkedList<PointF>();
+            convexHull = new LinkedList<PointF>();
             bmp = new Bitmap(pictureBox1.Width, pictureBox1.Height);
             pictureBox1.Image = bmp;
         }
 
         private void button1_Click(object sender, EventArgs e)
         {
-            Jarvis();
-            DrawConvexHull();
+            if (points.Count > 1)
+            {
+                Jarvis();
+                DrawConvexHull();
+            }
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -49,19 +48,20 @@ namespace IndividualTask1_ComputerGraphics_
             g.FillEllipse(solidBrush, e.X, e.Y, 3, 3);
             g.DrawEllipse(new Pen(Color.Red), e.X, e.Y, 3, 3);
             pictureBox1.Image = bmp;
-            //points.AddLast(e.Location);
-            points.Add(e.Location);
+            points.AddLast(e.Location);
         }
 
         private void DrawConvexHull()
         {
             Graphics g = Graphics.FromImage(bmp);
             Pen p = new Pen(Color.Black);
-            var prev = convexHull[0];
-            for (int i = 1; i < convexHull.Count; i++)
+            var cur = convexHull.First;
+            if (cur != convexHull.Last)
+                g.DrawLine(p, convexHull.First.Value, convexHull.Last.Value);
+            while (cur != convexHull.Last)
             {
-                g.DrawLine(p, prev, convexHull[i]);
-                prev = convexHull[i];
+                g.DrawLine(p, cur.Value, cur.Next.Value);
+                cur = cur.Next;
             }
             pictureBox1.Image = bmp;
         }
@@ -111,60 +111,57 @@ namespace IndividualTask1_ComputerGraphics_
         }
 
         private void Jarvis()
-        {/*
-            PointF first = points.First.Value;
-            foreach (var point in points) // Находим самую нижнюю точку. Если их несколько, то самую левую
+        {
+            LinkedListNode<PointF> first = points.First;
+            LinkedListNode<PointF> cur = points.First;
+            while (cur!=points.Last.Next) // Находим самую нижнюю точку. Если их несколько, то самую левую
             {
-                if (pointBellowLeft(point, first))
-                    first = point;
+                if (pointBellowLeft(cur.Value, first.Value))
+                    first = cur;
+                cur = cur.Next;
             }
-            var current = points.Find(first);
-            var firstVal = current.Value;
-            convexHull.AddFirst(current.Value);
-            points.Remove(current);*/
-            PointF first = points[0];
-            foreach (var point in points) // Находим самую нижнюю точку. Если их несколько, то самую левую
-            {
-                if (pointBellowLeft(point, first))
-                    first = point;
-            }
-            convexHull.Add(first);
-            //points.Remove(first);
+            convexHull.AddLast(first.Value);
+
             // Находим вторую точку. Она имеет наименьший полярный угол относительно первой точки как начала координат.
-            PointF second = first;
+            LinkedListNode<PointF> second = first;
             var minAngle = float.MaxValue;
-            foreach (var point in points)
+            cur = points.First;
+            while (cur != points.Last.Next)
             {
-                var localMinAngle = polarAngleTangent(first, point);
+                var localMinAngle = polarAngleTangent(first.Value, cur.Value);
                 if (localMinAngle <= minAngle)
                 {
-                    second = point;
+                    second = cur;
                     minAngle = localMinAngle;
                 }
+                cur = cur.Next;
             }
-            convexHull.Add(second);
+            convexHull.AddLast(second.Value);
+            LinkedListNode<PointF> prev = first;
+            LinkedListNode<PointF>  current = new LinkedListNode<PointF>(second.Value);
             points.Remove(second);
-            PointF prev = first;
-            PointF current = second;
+
             do
             {
-                PointF next = current;
+                LinkedListNode<PointF> next = current;
                 var min = float.MaxValue;
-                foreach (var point in points) // Находим следующую точку
+                cur = points.First;
+                while (cur!=points.Last.Next)
                 {
-                    var localMin = cosValueBetweenVectors(prev, current, point);
-                    if (localMin < min) // если точка составляет максимальный угол с текущей (минимальное скалярное произведение)
+                    var localMin = cosValueBetweenVectors(prev.Value, current.Value, cur.Value);
+                    if (localMin < min) // если точка составляет максимальный угол с текущей (косинус угла минимален)
                     {
                         min = localMin;
-                        next = point;
+                        next = cur;
                     }
+                    cur = cur.Next;
                 }
-                prev = current;
-                current = next;
-                convexHull.Add(next);
+                prev = new LinkedListNode<PointF>(current.Value);
+                current = new LinkedListNode<PointF>(next.Value);
+                convexHull.AddLast(next.Value);
                 points.Remove(next);
             }
-            while (current != first);
+            while (current.Value != first.Value);
         }
     }
 }
